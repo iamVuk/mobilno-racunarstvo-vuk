@@ -1,0 +1,80 @@
+﻿<!doctype html>
+<html lang="sr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MediaTrack</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core@7/css/ionic.bundle.css"/>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core@7/dist/ionic/ionic.esm.js"></script>
+  <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core@7/dist/ionic/ionic.js"></script>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+    <ion-app>
+        <ion-header>
+            <ion-toolbar>
+                <ion-title>MediaTrack</ion-title>
+            </ion-toolbar>
+        </ion-header>
+        <ion-content>
+            <div class="header-image">
+                <img src="filmovi.jpg" alt="Filmovi" />
+            </div>
+            <ion-content class="ion-padding container">
+                <ion-content class="ion-padding">
+
+                    <ion-card id="authCard">
+                        <ion-card-header>
+                            <ion-card-title>Prijava / Registracija</ion-card-title>
+                        </ion-card-header>
+                        <ion-card-content>
+                            <ion-item>
+                                <ion-label position="stacked">Email</ion-label>
+                                <ion-input id="email" type="email" required></ion-input>
+                            </ion-item>
+                            <ion-item>
+                                <ion-label position="stacked">Lozinka</ion-label>
+                                <ion-input id="pass" type="password" required></ion-input>
+                            </ion-item>
+                            <div class="row">
+                                <ion-button id="btnSignIn" expand="block">Prijava</ion-button>
+                                <ion-button id="btnSignUp" fill="outline" expand="block">Registracija</ion-button>
+                            </div>
+                            <ion-text color="danger"><small id="authErr"></small></ion-text>
+                        </ion-card-content>
+                    </ion-card>
+
+                    <ion-card id="appCard" style="display:none">
+                        <ion-card-header>
+                            <ion-card-title>Moji filmovi</ion-card-title>
+                            <ion-note id="helloNote"></ion-note>
+                        </ion-card-header>
+                        <ion-card-content>
+                            <ion-item>
+                                <ion-label position="stacked">Naslov</ion-label>
+                                <ion-input id="title"></ion-input>
+                            </ion-item>
+                            <ion-item>
+                                <ion-label position="stacked">Beleška</ion-label>
+                                <ion-textarea id="note"></ion-textarea>
+                            </ion-item>
+                            <ion-item>
+                                <ion-label>Status</ion-label>
+                                <ion-select id="status" value="PLANIRAM">
+                                    <ion-select-option value="PLANIRAM">PLANIRAM</ion-select-option>
+                                    <ion-select-option value="GLEDAM">GLEDAM</ion-select-option>
+                                    <ion-select-option value="GOTOVO">GOTOVO</ion-select-option>
+                                </ion-select>
+                            </ion-item>
+                            <ion-button id="btnAdd" expand="block">Dodaj</ion-button>
+                            <ion-list id="list"></ion-list>
+                            <ion-button id="btnSignOut" color="medium" fill="clear">Odjava</ion-button>
+                            <ion-text color="danger"><small id="crudErr"></small></ion-text>
+                        </ion-card-content>
+                    </ion-card>
+                </ion-content>
+    </ion-app>
+
+  <script src="app.js"></script>
+</body>
+</html>

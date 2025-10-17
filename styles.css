@@ -1,0 +1,198 @@
+
+:root {
+  --bg: #f6f7fb;
+  --card-bg: #ffffff;
+  --brand: #4c7cf3;
+  --brand-contrast: #ffffff;
+  --text: #1f2330;
+  --muted: #6b7280;
+  --radius: 18px;
+  --shadow: 0 10px 30px rgba(20, 34, 66, 0.08);
+}
+
+
+html, body, ion-app { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+ion-header {
+  --background: linear-gradient(135deg, #5a86ff, #3556d6);
+  --color: #fff;
+  box-shadow: var(--shadow);
+}
+ion-title { font-weight: 800; letter-spacing: .2px; }
+
+ion-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+ion-card-header { padding-bottom: 4px; }
+ion-card-title { font-size: 1.1rem; font-weight: 800; }
+
+
+.ion-padding { padding-top: 18px !important; }
+.container {
+  max-width: 680px;
+  margin: 20px auto;
+}
+.stack { display: grid; gap: 12px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+
+ion-item { --background: #fff; border: 1px solid #eef1f6; border-radius: 12px; --padding-start: 12px; margin-bottom: 10px; }
+ion-label { color: var(--muted); font-size: .9rem; }
+ion-input, ion-textarea { --padding-top: 10px; --padding-bottom: 10px; }
+
+
+ion-button {
+  --border-radius: 12px;
+  --box-shadow: var(--shadow);
+}
+#btnSignIn, #btnAdd { --background: var(--brand); --color: var(--brand-contrast); }
+#btnSignUp { --background: #fff; --color: var(--brand); --border-color: var(--brand); --border-width: 1px; }
+#btnSignOut { margin-top: 6px; }
+
+
+ion-list { margin-top: 6px; background: transparent; }
+ion-item::part(native) { border-radius: 14px; }
+ion-badge { margin-top: 6px; border-radius: 999px; padding: 6px 10px; }
+
+
+ion-item ion-button { margin-left: 6px; --box-shadow: none; }
+ion-item [data-action="plan"]  { --color: #1f7aff; }
+ion-item [data-action="watch"] { --color: #f59e0b; }
+ion-item [data-action="done"]  { --color: #10b981; }
+ion-item [data-action="del"]   { --color: #ef4444; }
+
+
+ion-note { color: var(--muted); font-size: .85rem; }
+#authErr, #crudErr { display:block; margin-top: 6px; }
+
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1420;
+    --card-bg: #151b2a;
+    --text: #f3f4f6;
+    --muted: #9aa4b2;
+    --shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+  ion-header { --background: linear-gradient(135deg, #2c3b86, #1a245f); }
+  ion-item { border-color: #232a3c; }
+  #btnSignUp { --background: transparent; --color: #9bb4ff; --border-color: #334155; }
+}
+
+ion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  --inner-padding-end: 0;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+ion-label h2 {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+ion-label p {
+  font-size: 0.9rem;
+  color: #475569;
+  margin: 0;
+}
+
+
+ion-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: white;
+}
+
+
+ion-button[color="danger"] {
+  margin-left: 10px;
+  font-size: 0.8rem;
+  --color: #ef4444;
+  --border-radius: 8px;
+  --padding-start: 6px;
+  --padding-end: 6px;
+}
+ion-button[color="danger"]:hover {
+  --color: #dc2626;
+}
+
+
+ion-item:hover {
+  background-color: #f9fafb;
+  transition: background-color 0.2s ease;
+}
+
+ion-item {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-image {
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.header-image img {
+  width: 120px;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.header-image img:hover {
+  transform: scale(1.05);
+}
+
+.app-shell {
+  max-width: 720px;     /* možeš 600–800px po želji */
+  margin: 0 auto;       /* centriranje */
+  padding: 0 16px;      /* malo vazduha sa strane */
+}
+
+.header-image { 
+  text-align: left;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+@media (max-width: 600px) {
+  .header-image { text-align: center; }
+}
+.header-image img {
+  width: 120px;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: transform .2s ease;
+}
+.header-image img:hover { transform: scale(1.05); }
+
+
+ion-card { width: 100%; }
+
+
