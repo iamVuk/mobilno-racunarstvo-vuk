@@ -20,6 +20,8 @@ Aplikacija koristi Firebase Realtime Database i REST API za izvođenje CRUD oper
  ┣ 📜 app.js → Logika aplikacije i povezivanje sa Firebaseom  
  ┣ 📜 styles.css → Stilizacija interfejsa  
  ┣ 📜 README.md → Opis projekta  
+ ┣ 🖼️ filmovi.jpg → Slika koja se prikazuje u aplikaciji
+
 
 ## Funkcionalnosti  
 - Registracija i prijava korisnika  
