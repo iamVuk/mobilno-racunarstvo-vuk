@@ -1,7 +1,17 @@
+// === OMDb (Open Movie Database) ===
+const OMDB_KEY = "43876d4";                   // tvoj ključ
+const OMDB_API = "https://www.omdbapi.com/";  // obavezno https!
 
+// === Firebase REST konfiguracija ===
 const API_KEY = "AIzaSyDyx936Vc2KWtxQo1hZg2VVnKVSniF1dnk";
 const DATABASE_URL = "https://mediatrack-76591-default-rtdb.firebaseio.com";
 
+// === DOM elementi ===
+const searchEl = document.getElementById('search');
+const btnSearch = document.getElementById('btnSearch');
+const searchResultsEl = document.getElementById('searchResults');
+if (btnSearch) btnSearch.onclick = searchMovies;
+if (searchEl) searchEl.addEventListener('keydown', e => { if (e.key === 'Enter') searchMovies(); });
 
 const authCard = document.getElementById('authCard');
 const appCard = document.getElementById('appCard');
@@ -15,29 +25,25 @@ const listEl = document.getElementById('list');
 const crudErr = document.getElementById('crudErr');
 const helloNote = document.getElementById('helloNote');
 
-
+// Dugmad
 document.getElementById('btnSignIn').onclick = signIn;
 document.getElementById('btnSignUp').onclick = signUp;
 document.getElementById('btnAdd').onclick = addItem;
 document.getElementById('btnSignOut').onclick = signOut;
 
-
+// Sesija
 let idToken = localStorage.getItem('idToken') || '';
 let uid = localStorage.getItem('uid') || '';
 if (idToken && uid) { showApp(); listItems(); }
 
-
+// === AUTH (REST) ===
 async function signUp() {
     authErr.textContent = '';
     try {
         const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: emailEl.value,
-                password: passEl.value,
-                returnSecureToken: true
-            })
+            body: JSON.stringify({ email: emailEl.value, password: passEl.value, returnSecureToken: true })
         });
         const j = await r.json();
         if (!r.ok) throw new Error(j.error ?.message || 'Registracija nije uspela');
@@ -54,11 +60,7 @@ async function signIn() {
         const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: emailEl.value,
-                password: passEl.value,
-                returnSecureToken: true
-            })
+            body: JSON.stringify({ email: emailEl.value, password: passEl.value, returnSecureToken: true })
         });
         const j = await r.json();
         if (!r.ok) throw new Error(j.error ?.message || 'Prijava nije uspela');
@@ -83,7 +85,7 @@ function showApp() {
     helloNote.textContent = `Prijavljen: ${emailEl.value || 'korisnik'}`;
 }
 
-
+// === BAZA (CRUD preko REST-a) ===
 async function listItems() {
     crudErr.textContent = '';
     listEl.innerHTML = '';
@@ -123,6 +125,19 @@ async function addItem() {
     } catch (e) { crudErr.textContent = e.message; }
 }
 
+async function setStatus(id, newStatus) {
+    try {
+        const url = `${DATABASE_URL}/users/${uid}/media/${id}.json?auth=${idToken}`;
+        const r = await fetch(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        if (!r.ok) throw new Error('Izmena statusa nije uspela');
+        await listItems();
+    } catch (e) { crudErr.textContent = e.message; }
+}
+
 async function removeItem(id) {
     try {
         const url = `${DATABASE_URL}/users/${uid}/media/${id}.json?auth=${idToken}`;
@@ -132,23 +147,108 @@ async function removeItem(id) {
     } catch (e) { crudErr.textContent = e.message; }
 }
 
+// === OMDb PRETRAGA ===
+async function searchMovies() {
+    if (!searchEl) return;
+    const q = (searchEl.value || '').trim();
+    searchResultsEl.innerHTML = '';
+    if (!q) return;
+    try {
+        const url = `${OMDB_API}?apikey=${OMDB_KEY}&type=movie&s=${encodeURIComponent(q)}`;
+        const r = await fetch(url);
+        if (!r.ok) throw new Error('Pretraga nije uspela');
+        const data = await r.json();
+        if (data.Response === "False" || !data.Search) {
+            const it = document.createElement('ion-item');
+            it.innerHTML = `<ion-label><p>Nema rezultata za: <b>${escapeHtml(q)}</b></p></ion-label>`;
+            searchResultsEl.appendChild(it);
+            return;
+        }
+        const results = data.Search.slice(0, 8);
+        for (const m of results) renderSearchResult(m);
+    } catch (e) {
+        const it = document.createElement('ion-item');
+        it.textContent = e.message;
+        searchResultsEl.appendChild(it);
+    }
+}
+
+function renderSearchResult(m) {
+    const title = m.Title || '(bez naziva)';
+    const year = m.Year ? `(${m.Year})` : '';
+    const posterUrl = (m.Poster && m.Poster !== 'N/A') ? m.Poster : '';
+    const it = document.createElement('ion-item');
+    it.innerHTML = `
+    ${posterUrl ? `<img class="result-poster" src="${posterUrl}" alt="">` : ''}
+    <ion-label>
+      <div style="font-weight:600">${escapeHtml(title)} ${year}</div>
+      <div style="font-size:.85rem;color:#64748b;">IMDb: ${escapeHtml(m.imdbID || '')}</div>
+    </ion-label>
+    <ion-button class="add-mini" size="small" data-add>➕ Dodaj</ion-button>
+  `;
+    it.querySelector('[data-add]').onclick = async () => {
+        await addFromOmdb({ title, poster: posterUrl, imdbId: m.imdbID || '' });
+    };
+    searchResultsEl.appendChild(it);
+}
+
+async function addFromOmdb({ title, poster, imdbId }) {
+    const payload = {
+        title,
+        note: '',
+        status: 'PLANIRAM',
+        poster: poster || '',
+        imdbId: imdbId || '',
+        createdAt: Date.now()
+    };
+    try {
+        const url = `${DATABASE_URL}/users/${uid}/media.json?auth=${idToken}`;
+        const r = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!r.ok) throw new Error('Dodavanje iz OMDb nije uspelo');
+        await listItems();
+    } catch (e) { alert(e.message); }
+}
+
+// === RENDER ===
+function nextStatus(s) {
+    const order = ['PLANIRAM', 'GLEDAM', 'GOTOVO'];
+    const i = order.indexOf(s);
+    return order[(i + 1) % order.length];
+}
+
 function renderItem(it) {
     const li = document.createElement('ion-item');
 
+    // boje statusa
+    let badgeColor = '#60a5fa';           // PLANIRAM
+    if (it.status === 'GLEDAM') badgeColor = '#fbbf24';
+    if (it.status === 'GOTOVO') badgeColor = '#22c55e';
 
-    let badgeColor = '#60a5fa'; 
-    if (it.status === 'GLEDAM') badgeColor = '#fbbf24'; 
-    if (it.status === 'GOTOVO') badgeColor = '#22c55e'; 
+    const poster = it.poster || '';
 
     li.innerHTML = `
+    ${poster ? `<ion-avatar slot="start"><img src="${poster}" alt=""></ion-avatar>` : ''}
     <ion-label>
       <h2>${escapeHtml(it.title || '(bez naslova)')}</h2>
       ${it.note ? `<p>${escapeHtml(it.note)}</p>` : ''}
-      <ion-badge style="background:${badgeColor};color:white;padding:4px 8px;border-radius:6px;">${it.status || 'PLANIRAM'}</ion-badge>
+      <ion-badge class="status-badge" style="background:${badgeColor};color:white;padding:4px 8px;border-radius:6px;">
+        ${it.status || 'PLANIRAM'}
+      </ion-badge>
     </ion-label>
     <ion-button color="danger" fill="clear" size="small" data-action="del">Obriši</ion-button>
   `;
 
+    // klikom na bedž rotiramo status
+    li.querySelector('.status-badge').onclick = () => {
+        const next = nextStatus(it.status || 'PLANIRAM');
+        setStatus(it.id, next);
+    };
+
+    // brisanje
     li.querySelector('[data-action="del"]').onclick = () => {
         if (confirm('Da li sigurno želiš da obrišeš ovaj film?')) removeItem(it.id);
     };
@@ -156,7 +256,7 @@ function renderItem(it) {
     listEl.appendChild(li);
 }
 
-
+// === Helper ===
 function escapeHtml(s) {
     return (s || '').replace(/[&<>"']/g, m => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'

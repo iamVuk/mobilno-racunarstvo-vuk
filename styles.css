@@ -195,4 +195,25 @@ ion-item {
 
 ion-card { width: 100%; }
 
+/* Rezultati pretrage */
+#searchResults ion-item {
+  --inner-padding-end: 8px;
+  align-items: center;
+}
+.result-poster {
+  width: 44px;
+  height: 66px;
+  border-radius: 6px;
+  object-fit: cover;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  margin-right: 10px;
+}
+.add-mini {
+  font-size: .8rem;
+}
+
+/* Avatar u mojoj listi */
+ion-avatar {
+  margin-right: 10px;
+}
 
