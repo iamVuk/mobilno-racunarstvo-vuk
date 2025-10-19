@@ -25,16 +25,69 @@ const listEl = document.getElementById('list');
 const crudErr = document.getElementById('crudErr');
 const helloNote = document.getElementById('helloNote');
 
-// Dugmad
+// Header "Odjava" (uvek dostupno kad je app vidljiv)
+const signoutWrap = document.getElementById('signoutWrap');
+const btnSignOutTop = document.getElementById('btnSignOutTop');
+if (btnSignOutTop) btnSignOutTop.onclick = signOut;
+
+// Donje dugme Odjava (u kartici)
+const btnSignOutBottom = document.getElementById('btnSignOut');
+if (btnSignOutBottom) btnSignOutBottom.onclick = signOut;
+
+// Dugmad auth/CRUD
 document.getElementById('btnSignIn').onclick = signIn;
 document.getElementById('btnSignUp').onclick = signUp;
 document.getElementById('btnAdd').onclick = addItem;
-document.getElementById('btnSignOut').onclick = signOut;
 
 // Sesija
 let idToken = localStorage.getItem('idToken') || '';
 let uid = localStorage.getItem('uid') || '';
-if (idToken && uid) { showApp(); listItems(); }
+
+// Inicijalizacija (validacija tokena ako postoji)
+initSession();
+
+async function initSession() {
+    if (!idToken || !uid) {
+        showAuth();
+        return;
+    }
+    const ok = await validateSession(idToken);
+    if (ok) {
+        showApp();
+        listItems();
+    } else {
+        signOut(); // očisti sve i pokaži auth
+    }
+}
+
+function showAuth() {
+    authCard.style.display = 'block';
+    appCard.style.display = 'none';
+    if (signoutWrap) signoutWrap.style.display = 'none';
+}
+
+function showApp() {
+    authCard.style.display = 'none';
+    appCard.style.display = 'block';
+    if (signoutWrap) signoutWrap.style.display = 'block';
+    helloNote.textContent = `Prijavljen: ${emailEl.value || 'korisnik'}`;
+}
+
+// === Validacija idToken-a (Firebase Identity accounts:lookup) ===
+async function validateSession(token) {
+    try {
+        const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken: token })
+        });
+        if (!r.ok) return false;
+        const j = await r.json();
+        return Array.isArray(j.users) && j.users.length > 0;
+    } catch {
+        return false;
+    }
+}
 
 // === AUTH (REST) ===
 async function signUp() {
@@ -75,14 +128,7 @@ function signOut() {
     localStorage.removeItem('idToken');
     localStorage.removeItem('uid');
     idToken = ''; uid = '';
-    appCard.style.display = 'none';
-    authCard.style.display = 'block';
-}
-
-function showApp() {
-    authCard.style.display = 'none';
-    appCard.style.display = 'block';
-    helloNote.textContent = `Prijavljen: ${emailEl.value || 'korisnik'}`;
+    showAuth();
 }
 
 // === BAZA (CRUD preko REST-a) ===
@@ -92,6 +138,10 @@ async function listItems() {
     try {
         const url = `${DATABASE_URL}/users/${uid}/media.json?auth=${idToken}`;
         const r = await fetch(url);
+        if (r.status === 401 || r.status === 403) {
+            signOut();
+            return;
+        }
         const j = await r.json();
         const items = j ? Object.entries(j).map(([id, v]) => ({ id, ...v })) : [];
         items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -242,7 +292,7 @@ function renderItem(it) {
     <ion-button color="danger" fill="clear" size="small" data-action="del">Obriši</ion-button>
   `;
 
-    // klikom na bedž rotiramo status
+    // klik na bedž = rotacija statusa
     li.querySelector('.status-badge').onclick = () => {
         const next = nextStatus(it.status || 'PLANIRAM');
         setStatus(it.id, next);
