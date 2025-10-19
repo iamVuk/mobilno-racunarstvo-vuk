@@ -14,10 +14,10 @@
         <ion-header>
             <ion-toolbar>
                 <ion-title>MediaTrack</ion-title>
+                <!-- Odjava u headeru -->
                 <ion-buttons slot="end" id="signoutWrap" style="display:none">
                     <ion-button id="btnSignOutTop">Odjava</ion-button>
                 </ion-buttons>
-
             </ion-toolbar>
         </ion-header>
 
@@ -27,7 +27,6 @@
             </div>
 
             <ion-content class="ion-padding">
-
                 <!-- Kartica za prijavu -->
                 <ion-card id="authCard">
                     <ion-card-header>
@@ -68,36 +67,17 @@
                         <!-- Rezultati pretrage -->
                         <ion-list id="searchResults"></ion-list>
 
+                        <!-- Moja lista -->
                         <ion-item lines="full">
-                            <ion-label>— ili ručni unos ispod —</ion-label>
+                            <ion-label>— moja lista —</ion-label>
                         </ion-item>
-
-                        <!-- Ručni unos -->
-                        <ion-item>
-                            <ion-label position="stacked">Naslov</ion-label>
-                            <ion-input id="title"></ion-input>
-                        </ion-item>
-                        <ion-item>
-                            <ion-label position="stacked">Beleška</ion-label>
-                            <ion-textarea id="note"></ion-textarea>
-                        </ion-item>
-                        <ion-item>
-                            <ion-label>Status</ion-label>
-                            <ion-select id="status" value="PLANIRAM">
-                                <ion-select-option value="PLANIRAM">PLANIRAM</ion-select-option>
-                                <ion-select-option value="GLEDAM">GLEDAM</ion-select-option>
-                                <ion-select-option value="GOTOVO">GOTOVO</ion-select-option>
-                            </ion-select>
-                        </ion-item>
-                        <ion-button id="btnAdd" expand="block">Dodaj</ion-button>
-
                         <ion-list id="list"></ion-list>
+
+                        <!-- (opciono) odjava i dole -->
                         <ion-button id="btnSignOut" color="medium" fill="clear">Odjava</ion-button>
                         <ion-text color="danger"><small id="crudErr"></small></ion-text>
-
                     </ion-card-content>
                 </ion-card>
-
             </ion-content>
         </ion-content>
     </ion-app>

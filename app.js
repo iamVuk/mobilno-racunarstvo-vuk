@@ -1,6 +1,15 @@
+// === FORCE LOGOUT preko URL-a (za slučaj "zaglavljene" sesije) ===
+if (location.search.includes('logout=1') || location.hash.includes('logout')) {
+    try {
+        localStorage.removeItem('idToken');
+        localStorage.removeItem('uid');
+    } catch (e) { }
+    history.replaceState(null, '', location.pathname);
+}
+
 // === OMDb (Open Movie Database) ===
-const OMDB_KEY = "43876d4";                   // tvoj ključ
-const OMDB_API = "https://www.omdbapi.com/";  // obavezno https!
+const OMDB_KEY = "43876d4";   // npr. "43876d4"
+const OMDB_API = "https://www.omdbapi.com/";         // obavezno https!
 
 // === Firebase REST konfiguracija ===
 const API_KEY = "AIzaSyDyx936Vc2KWtxQo1hZg2VVnKVSniF1dnk";
@@ -18,46 +27,32 @@ const appCard = document.getElementById('appCard');
 const emailEl = document.getElementById('email');
 const passEl = document.getElementById('pass');
 const authErr = document.getElementById('authErr');
-const titleEl = document.getElementById('title');
-const noteEl = document.getElementById('note');
-const statusEl = document.getElementById('status');
 const listEl = document.getElementById('list');
 const crudErr = document.getElementById('crudErr');
 const helloNote = document.getElementById('helloNote');
 
-// Header "Odjava" (uvek dostupno kad je app vidljiv)
+// Header "Odjava"
 const signoutWrap = document.getElementById('signoutWrap');
 const btnSignOutTop = document.getElementById('btnSignOutTop');
 if (btnSignOutTop) btnSignOutTop.onclick = signOut;
 
-// Donje dugme Odjava (u kartici)
+// Donje dugme Odjava
 const btnSignOutBottom = document.getElementById('btnSignOut');
 if (btnSignOutBottom) btnSignOutBottom.onclick = signOut;
 
-// Dugmad auth/CRUD
+// Dugmad auth
 document.getElementById('btnSignIn').onclick = signIn;
 document.getElementById('btnSignUp').onclick = signUp;
-document.getElementById('btnAdd').onclick = addItem;
 
 // Sesija
 let idToken = localStorage.getItem('idToken') || '';
 let uid = localStorage.getItem('uid') || '';
-
-// Inicijalizacija (validacija tokena ako postoji)
 initSession();
 
 async function initSession() {
-    if (!idToken || !uid) {
-        showAuth();
-        return;
-    }
+    if (!idToken || !uid) { showAuth(); return; }
     const ok = await validateSession(idToken);
-    if (ok) {
-        showApp();
-        listItems();
-    } else {
-        signOut(); // očisti sve i pokaži auth
-    }
+    if (ok) { showApp(); listItems(); } else { signOut(); }
 }
 
 function showAuth() {
@@ -73,7 +68,7 @@ function showApp() {
     helloNote.textContent = `Prijavljen: ${emailEl.value || 'korisnik'}`;
 }
 
-// === Validacija idToken-a (Firebase Identity accounts:lookup) ===
+// === Validacija tokena (Firebase accounts:lookup) ===
 async function validateSession(token) {
     try {
         const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${API_KEY}`, {
@@ -83,7 +78,17 @@ async function validateSession(token) {
         });
         if (!r.ok) return false;
         const j = await r.json();
-        return Array.isArray(j.users) && j.users.length > 0;
+        if (!Array.isArray(j.users) || j.users.length === 0) return false;
+
+        const found = j.users[0];
+        // Mora da se poklopi uid iz tokena i naš localStorage uid
+        if (typeof found.localId !== 'string' || found.localId !== uid) return false;
+
+        // (opciono) upiši email u helloNote
+        if (found.email) {
+            helloNote.textContent = `Prijavljen: ${found.email}`;
+        }
+        return true;
     } catch {
         return false;
     }
@@ -131,47 +136,23 @@ function signOut() {
     showAuth();
 }
 
-// === BAZA (CRUD preko REST-a) ===
+// === CRUD (Firebase REST) ===
 async function listItems() {
     crudErr.textContent = '';
     listEl.innerHTML = '';
     try {
         const url = `${DATABASE_URL}/users/${uid}/media.json?auth=${idToken}`;
         const r = await fetch(url);
-        if (r.status === 401 || r.status === 403) {
-            signOut();
-            return;
-        }
+        if (r.status === 401 || r.status === 403) { signOut(); return; }
         const j = await r.json();
         const items = j ? Object.entries(j).map(([id, v]) => ({ id, ...v })) : [];
         items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         for (const it of items) renderItem(it);
         if (!items.length) {
             const empty = document.createElement('ion-item');
-            empty.innerHTML = `<ion-label><p>Nema filmova. Dodaj prvi iznad.</p></ion-label>`;
+            empty.innerHTML = `<ion-label><p>Nema filmova. Pretraži iznad i dodaj.</p></ion-label>`;
             listEl.appendChild(empty);
         }
-    } catch (e) { crudErr.textContent = e.message; }
-}
-
-async function addItem() {
-    crudErr.textContent = '';
-    const payload = {
-        title: titleEl.value || '',
-        note: noteEl.value || '',
-        status: statusEl.value || 'PLANIRAM',
-        createdAt: Date.now()
-    };
-    try {
-        const url = `${DATABASE_URL}/users/${uid}/media.json?auth=${idToken}`;
-        const r = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        if (!r.ok) throw new Error('Dodavanje nije uspelo');
-        titleEl.value = ''; noteEl.value = ''; statusEl.value = 'PLANIRAM';
-        await listItems();
     } catch (e) { crudErr.textContent = e.message; }
 }
 
@@ -197,13 +178,14 @@ async function removeItem(id) {
     } catch (e) { crudErr.textContent = e.message; }
 }
 
-// === OMDb PRETRAGA ===
+// === OMDb: pretraga + detalji (za opis) ===
 async function searchMovies() {
     if (!searchEl) return;
     const q = (searchEl.value || '').trim();
     searchResultsEl.innerHTML = '';
     if (!q) return;
     try {
+        // Search po naslovu
         const url = `${OMDB_API}?apikey=${OMDB_KEY}&type=movie&s=${encodeURIComponent(q)}`;
         const r = await fetch(url);
         if (!r.ok) throw new Error('Pretraga nije uspela');
@@ -227,6 +209,7 @@ function renderSearchResult(m) {
     const title = m.Title || '(bez naziva)';
     const year = m.Year ? `(${m.Year})` : '';
     const posterUrl = (m.Poster && m.Poster !== 'N/A') ? m.Poster : '';
+
     const it = document.createElement('ion-item');
     it.innerHTML = `
     ${posterUrl ? `<img class="result-poster" src="${posterUrl}" alt="">` : ''}
@@ -236,38 +219,52 @@ function renderSearchResult(m) {
     </ion-label>
     <ion-button class="add-mini" size="small" data-add>➕ Dodaj</ion-button>
   `;
+
     it.querySelector('[data-add]').onclick = async () => {
-        await addFromOmdb({ title, poster: posterUrl, imdbId: m.imdbID || '' });
+        await addFromOmdb(m.imdbID || '', title, posterUrl);
     };
+
     searchResultsEl.appendChild(it);
 }
 
-async function addFromOmdb({ title, poster, imdbId }) {
-    const payload = {
-        title,
-        note: '',
-        status: 'PLANIRAM',
-        poster: poster || '',
-        imdbId: imdbId || '',
-        createdAt: Date.now()
-    };
+// Prvo povučemo detalje da dobijemo i opis (Plot), pa upis u Firebase
+async function addFromOmdb(imdbId, fallbackTitle, posterUrl) {
     try {
+        let title = fallbackTitle;
+        let plot = '';
+        if (imdbId) {
+            const dUrl = `${OMDB_API}?apikey=${OMDB_KEY}&i=${encodeURIComponent(imdbId)}&plot=short`;
+            const dr = await fetch(dUrl);
+            if (dr.ok) {
+                const dj = await dr.json();
+                if (dj && dj.Response !== "False") {
+                    title = dj.Title || title;
+                    plot = (dj.Plot && dj.Plot !== "N/A") ? dj.Plot : '';
+                }
+            }
+        }
+        const payload = {
+            title,
+            note: plot,                 // čuvamo opis u "note", da se prikaže u listi
+            status: 'PLANIRAM',
+            poster: posterUrl || '',
+            imdbId: imdbId || '',
+            createdAt: Date.now()
+        };
         const url = `${DATABASE_URL}/users/${uid}/media.json?auth=${idToken}`;
         const r = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-
         });
-
         if (!r.ok) throw new Error('Dodavanje iz OMDb nije uspelo');
-        if (searchEl) searchEl.value = '';
-        if (searchResultsEl) searchResultsEl.innerHTML = '';
         await listItems();
-    } catch (e) { alert(e.message); }
+    } catch (e) {
+        alert(e.message);
+    }
 }
 
-// === RENDER ===
+// === render liste ===
 function nextStatus(s) {
     const order = ['PLANIRAM', 'GLEDAM', 'GOTOVO'];
     const i = order.indexOf(s);
@@ -285,24 +282,22 @@ function renderItem(it) {
     const poster = it.poster || '';
 
     li.innerHTML = `
-    ${poster ? `<ion-avatar slot="start"><img src="${poster}" alt=""></ion-avatar>` : ''}
+    ${poster ? `<img class="poster-square" src="${poster}" alt="">` : ''}
     <ion-label>
       <h2>${escapeHtml(it.title || '(bez naslova)')}</h2>
       ${it.note ? `<p>${escapeHtml(it.note)}</p>` : ''}
-      <ion-badge class="status-badge" style="background:${badgeColor};color:white;padding:4px 8px;border-radius:6px;">
+      <ion-badge class="status-badge" style="background:${badgeColor};color:white;padding:4px 8px;border-radius:6px;cursor:pointer;">
         ${it.status || 'PLANIRAM'}
       </ion-badge>
     </ion-label>
     <ion-button color="danger" fill="clear" size="small" data-action="del">Obriši</ion-button>
   `;
 
-    // klik na bedž = rotacija statusa
     li.querySelector('.status-badge').onclick = () => {
         const next = nextStatus(it.status || 'PLANIRAM');
         setStatus(it.id, next);
     };
 
-    // brisanje
     li.querySelector('[data-action="del"]').onclick = () => {
         if (confirm('Da li sigurno želiš da obrišeš ovaj film?')) removeItem(it.id);
     };
@@ -310,7 +305,7 @@ function renderItem(it) {
     listEl.appendChild(li);
 }
 
-// === Helper ===
+// === helper ===
 function escapeHtml(s) {
     return (s || '').replace(/[&<>"']/g, m => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
