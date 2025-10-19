@@ -257,8 +257,12 @@ async function addFromOmdb({ title, poster, imdbId }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
+
         });
+
         if (!r.ok) throw new Error('Dodavanje iz OMDb nije uspelo');
+        if (searchEl) searchEl.value = '';
+        if (searchResultsEl) searchResultsEl.innerHTML = '';
         await listItems();
     } catch (e) { alert(e.message); }
 }
