@@ -1,35 +1,72 @@
 # MediaTrack
 
-**Autor:** Vuk Šeovac  
-**Predmet:** Mobilno računarstvo 2024/25  
+**Autor:**: Vuk Šeovac
+**Predmet:** Mobilno računarstvo 2024/25
 
-## Opis  
-MediaTrack je hibridna mobilna aplikacija razvijena pomoću Ionic frameworka.  
-Omogućava korisniku prijavu, registraciju i praćenje filmova koje planira da gleda, trenutno gleda ili je završio.  
-Aplikacija koristi Firebase Realtime Database i REST API za izvođenje CRUD operacija.
+## Opis
 
-## Tehnologije korišćene  
-- HTML, CSS, JavaScript  
-- Ionic framework (CDN)  
-- Firebase Realtime Database  
-- REST API komunikacija (fetch)
+MediaTrack je hibridna mobilna aplikacija izrađena pomoću Ionic frameworka.
+Omogućava korisniku prijavu, registraciju i praćenje filmova koje planira da gleda, trenutno gleda ili je završio.
+Podaci se čuvaju u Firebase Realtime Database pomoću REST API zahteva.
 
-## Struktura projekta  
-📁 mobilno_racunarstvo_vuk  
- ┣ 📜 index.html → Glavna stranica aplikacije  
- ┣ 📜 app.js → Logika aplikacije i povezivanje sa Firebaseom  
- ┣ 📜 styles.css → Stilizacija interfejsa  
- ┣ 📜 README.md → Opis projekta  
- ┣ 🖼️ filmovi.jpg → Slika koja se prikazuje u aplikaciji
+Aplikacija uključuje i integraciju sa OMDb API-jem koja omogućava pretragu filmova, automatsko preuzimanje naslova, postera i kratkog opisa, čime se olakšava dodavanje filmova u ličnu kolekciju.
 
+## Tehnologije
 
-## Funkcionalnosti  
-- Registracija i prijava korisnika  
-- Dodavanje filmova sa napomenom i statusom  
-- Pregled liste filmova  
-- Ažuriranje statusa (Planiram, Gledam, Završeno)  
-- Brisanje filmova  
-- Odjava korisnika  
+- HTML, CSS, JavaScript
+
+- Ionic framework (CDN)
+
+- Firebase Authentication (REST)
+
+- Firebase Realtime Database (REST)
+
+- OMDb API (Open Movie Database)
+
+## Struktura projekta
+
+📁 mobilno_racunarstvo_vuk
+┣ 📜 index.html – glavna stranica aplikacije
+┣ 📜 app.js – logika aplikacije, autentikacija, rad sa bazom i API pozivi
+┣ 📜 styles.css – stilizacija korisničkog interfejsa
+┣ 📜 README.md – opis projekta
+┣ 🖼️ filmovi.jpg – ilustracija prikazana u zaglavlju aplikacije
+
+## Funkcionalnosti
+
+- Registracija i prijava korisnika
+
+- Pretraga filmova putem OMDb API-ja
+
+- Automatsko dodavanje naslova, slike i opisa iz baze filmova
+
+- Pregled liste filmova po korisniku
+
+- Ažuriranje statusa gledanja (Planiram, Gledam, Gotovo)
+
+- Brisanje filmova iz liste
+
+- Odjava korisnika
+
+- Responsivan prikaz i prilagođen izgled za mobilne uređaje
+
+## Kratak opis rada
+
+Autentifikacija korisnika i rad sa bazom podataka realizovani su pomoću Firebase REST servisa.
+Svaki korisnik ima svoj odvojeni prostor u bazi (/users/{uid}/media/) gde se čuvaju filmovi sa atributima: naslov, opis, poster, status i vreme dodavanja.
+Pretraga filmova vrši se putem OMDb API-ja, gde se za izabrani film automatski preuzimaju podaci i čuvaju u Firebase bazi.
+
+## Dodatne funkcionalnosti
+
+Osim osnovnih CRUD operacija, aplikacija uključuje:
+
+- Validaciju sesije i automatsko odjavljivanje pri isteku tokena
+
+- Dinamičko menjanje statusa filma jednim klikom
+
+- Prikaz postera u kvadratnom formatu radi preglednijeg interfejsa
+
+- Automatsko čišćenje polja za pretragu i zatvaranje sugestija nakon dodavanja filma
 
 ## Firebase konfiguracija  
 Podaci o projektu se nalaze u fajlu `app.js`:  
@@ -41,11 +78,10 @@ const firebaseConfig = {
   ...
 };
 ```
-## Karakteristike
-
-Aplikacija je hibridna, što znači da se može pokretati i u web browseru i kao mobilna aplikacija.
-
 ## Autor
 
 Vuk Šeovac
 Fakultet organizacionih nauka
+
+
+
