@@ -25,11 +25,11 @@ Aplikacija uključuje i integraciju sa OMDb API-jem koja omogućava pretragu fil
 
 ## Struktura projekta
 
-📁 mobilno_racunarstvo_vuk
-┣ 📜 index.html – glavna stranica aplikacije
-┣ 📜 app.js – logika aplikacije, autentikacija, rad sa bazom i API pozivi
-┣ 📜 styles.css – stilizacija korisničkog interfejsa
-┣ 📜 README.md – opis projekta
+📁 mobilno_racunarstvo_vuk <br>
+┣ 📜 index.html – glavna stranica aplikacije <br>
+┣ 📜 app.js – logika aplikacije, autentikacija, rad sa bazom i API pozivi <br>
+┣ 📜 styles.css – stilizacija korisničkog interfejsa <br>
+┣ 📜 README.md – opis projekta <br>
 ┣ 🖼️ filmovi.jpg – ilustracija prikazana u zaglavlju aplikacije
 
 ## Funkcionalnosti
