@@ -8,8 +8,8 @@ if (location.search.includes('logout=1') || location.hash.includes('logout')) {
 }
 
 // === OMDb (Open Movie Database) ===
-const OMDB_KEY = "43876d4";   // npr. "43876d4"
-const OMDB_API = "https://www.omdbapi.com/";         // obavezno https!
+const OMDB_KEY = "43876d4";
+const OMDB_API = "https://www.omdbapi.com/"; // https obavezno
 
 // === Firebase REST konfiguracija ===
 const API_KEY = "AIzaSyDyx936Vc2KWtxQo1hZg2VVnKVSniF1dnk";
@@ -81,13 +81,9 @@ async function validateSession(token) {
         if (!Array.isArray(j.users) || j.users.length === 0) return false;
 
         const found = j.users[0];
-        // Mora da se poklopi uid iz tokena i naš localStorage uid
         if (typeof found.localId !== 'string' || found.localId !== uid) return false;
 
-        // (opciono) upiši email u helloNote
-        if (found.email) {
-            helloNote.textContent = `Prijavljen: ${found.email}`;
-        }
+        if (found.email) helloNote.textContent = `Prijavljen: ${found.email}`;
         return true;
     } catch {
         return false;
@@ -133,6 +129,9 @@ function signOut() {
     localStorage.removeItem('idToken');
     localStorage.removeItem('uid');
     idToken = ''; uid = '';
+    // očisti i pretragu/sugestije da ne ostane otvoreno
+    if (searchResultsEl) searchResultsEl.innerHTML = '';
+    if (searchEl) searchEl.value = '';
     showAuth();
 }
 
@@ -182,10 +181,11 @@ async function removeItem(id) {
 async function searchMovies() {
     if (!searchEl) return;
     const q = (searchEl.value || '').trim();
+    // ako je polje prazno, zatvori sugestije i izađi
+    if (!q) { if (searchResultsEl) searchResultsEl.innerHTML = ''; return; }
+
     searchResultsEl.innerHTML = '';
-    if (!q) return;
     try {
-        // Search po naslovu
         const url = `${OMDB_API}?apikey=${OMDB_KEY}&type=movie&s=${encodeURIComponent(q)}`;
         const r = await fetch(url);
         if (!r.ok) throw new Error('Pretraga nije uspela');
@@ -245,7 +245,7 @@ async function addFromOmdb(imdbId, fallbackTitle, posterUrl) {
         }
         const payload = {
             title,
-            note: plot,                 // čuvamo opis u "note", da se prikaže u listi
+            note: plot,             // čuvamo opis u "note", da se prikaže u listi
             status: 'PLANIRAM',
             poster: posterUrl || '',
             imdbId: imdbId || '',
@@ -258,7 +258,15 @@ async function addFromOmdb(imdbId, fallbackTitle, posterUrl) {
             body: JSON.stringify(payload)
         });
         if (!r.ok) throw new Error('Dodavanje iz OMDb nije uspelo');
+
         await listItems();
+
+        // --- NOVO: zatvori sugestije i očisti polje ---
+        if (searchResultsEl) searchResultsEl.innerHTML = '';
+        if (searchEl) {
+            searchEl.value = '';
+            searchEl.blur(); // skloni fokus (na telefonu spušta tastaturu)
+        }
     } catch (e) {
         alert(e.message);
     }
@@ -311,3 +319,13 @@ function escapeHtml(s) {
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[m]));
 }
+
+// === NOVO: zatvori sugestije klikom van pretrage/listе rezultata ===
+document.addEventListener('click', (e) => {
+    const t = e.target;
+    const insideResults = searchResultsEl && searchResultsEl.contains(t);
+    const onSearchOrBtn = t === searchEl || t === btnSearch;
+    if (!insideResults && !onSearchOrBtn) {
+        if (searchResultsEl) searchResultsEl.innerHTML = '';
+    }
+});
