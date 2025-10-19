@@ -245,3 +245,57 @@ ion-avatar {
 .add-mini {
   font-size: .8rem;
 }
+/* kartica u listi */
+ion-item.media-item {
+  --inner-padding-top: 10px;
+  --inner-padding-bottom: 10px;
+  --inner-padding-start: 10px;
+  --inner-padding-end: 10px;
+  align-items: center; /* centrirano po visini */
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+  margin: 8px 0;
+  min-height: 110px; /* malo više prostora */
+}
+
+/* sličica kvadrat */
+.poster-square {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
+/* naslov + opis + badge */
+.media-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* centrira naslov i tekst vertikalno */
+}
+
+.media-content h2 {
+  font-size: 1.05rem;
+  margin: 0 0 6px 0;
+  line-height: 1.2;
+}
+
+/* opis – fiksna visina + scroll */
+.media-desc {
+  max-height: 72px;
+  overflow: auto;
+  line-height: 1.35;
+  color: #475569;
+  margin: 0 0 8px 0;
+  padding-right: 6px;
+}
+
+/* dugme "OBRIŠI" na sredini desno */
+.media-actions {
+  margin-left: auto;
+  align-self: center; /* poravnanje na sredinu */
+}
+
+/* lepši scroll */
+.media-desc::-webkit-scrollbar { height: 6px; width: 6px; }
+.media-desc::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }

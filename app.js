@@ -181,6 +181,7 @@ async function removeItem(id) {
 async function searchMovies() {
     if (!searchEl) return;
     const q = (searchEl.value || '').trim();
+
     // ako je polje prazno, zatvori sugestije i izađi
     if (!q) { if (searchResultsEl) searchResultsEl.innerHTML = ''; return; }
 
@@ -227,7 +228,7 @@ function renderSearchResult(m) {
     searchResultsEl.appendChild(it);
 }
 
-// Prvo povučemo detalje da dobijemo i opis (Plot), pa upis u Firebase
+// Dovuci detalje (Plot) pa upiši u Firebase
 async function addFromOmdb(imdbId, fallbackTitle, posterUrl) {
     try {
         let title = fallbackTitle;
@@ -245,7 +246,7 @@ async function addFromOmdb(imdbId, fallbackTitle, posterUrl) {
         }
         const payload = {
             title,
-            note: plot,             // čuvamo opis u "note", da se prikaže u listi
+            note: plot,          // opis prikazujemo kao "note"
             status: 'PLANIRAM',
             poster: posterUrl || '',
             imdbId: imdbId || '',
@@ -261,12 +262,9 @@ async function addFromOmdb(imdbId, fallbackTitle, posterUrl) {
 
         await listItems();
 
-        // --- NOVO: zatvori sugestije i očisti polje ---
+        // zatvori sugestije i očisti polje
         if (searchResultsEl) searchResultsEl.innerHTML = '';
-        if (searchEl) {
-            searchEl.value = '';
-            searchEl.blur(); // skloni fokus (na telefonu spušta tastaturu)
-        }
+        if (searchEl) { searchEl.value = ''; searchEl.blur(); }
     } catch (e) {
         alert(e.message);
     }
@@ -281,6 +279,7 @@ function nextStatus(s) {
 
 function renderItem(it) {
     const li = document.createElement('ion-item');
+    li.classList.add('media-item'); // za stilove kartice
 
     // boje statusa
     let badgeColor = '#60a5fa';           // PLANIRAM
@@ -291,14 +290,17 @@ function renderItem(it) {
 
     li.innerHTML = `
     ${poster ? `<img class="poster-square" src="${poster}" alt="">` : ''}
-    <ion-label>
+    <ion-label class="media-content">
       <h2>${escapeHtml(it.title || '(bez naslova)')}</h2>
-      ${it.note ? `<p>${escapeHtml(it.note)}</p>` : ''}
-      <ion-badge class="status-badge" style="background:${badgeColor};color:white;padding:4px 8px;border-radius:6px;cursor:pointer;">
+      ${it.note ? `<div class="media-desc">${escapeHtml(it.note)}</div>` : ''}
+      <ion-badge class="status-badge"
+        style="background:${badgeColor};color:#fff;padding:4px 10px;border-radius:8px;cursor:pointer;">
         ${it.status || 'PLANIRAM'}
       </ion-badge>
     </ion-label>
-    <ion-button color="danger" fill="clear" size="small" data-action="del">Obriši</ion-button>
+    <div class="media-actions">
+      <ion-button color="danger" fill="clear" size="small" data-action="del">Obriši</ion-button>
+    </div>
   `;
 
     li.querySelector('.status-badge').onclick = () => {
@@ -320,7 +322,7 @@ function escapeHtml(s) {
     }[m]));
 }
 
-// === NOVO: zatvori sugestije klikom van pretrage/listе rezultata ===
+// === Zatvori sugestije klikom van pretrage/listе rezultata ===
 document.addEventListener('click', (e) => {
     const t = e.target;
     const insideResults = searchResultsEl && searchResultsEl.contains(t);
